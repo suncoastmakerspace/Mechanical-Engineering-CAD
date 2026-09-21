@@ -1,0 +1,33 @@
+{
+  "name": "mechanical-engineering-with-cad",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit && tsc -p functions/tsconfig.json",
+    "dev:cf": "vite build && wrangler pages dev dist",
+    "mock-sheet": "node scripts/mock-sheet.mjs",
+    "add-member": "node scripts/add-member.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.454.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "playwright": "^1.56.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "wrangler": "^3.114.17"
+  }
+}

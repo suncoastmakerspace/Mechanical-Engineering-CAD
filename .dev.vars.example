@@ -1,0 +1,16 @@
+# Copy to .dev.vars for local `npm run dev:cf`. .dev.vars is gitignored.
+# In production these are set in the Cloudflare Pages dashboard instead.
+
+# The Apps Script /exec URL bound to the roster sheet.
+SHEETS_ENDPOINT="http://127.0.0.1:8788/mock-sheet"
+
+# Must match SHARED_SECRET in apps-script/Code.gs.
+SHEETS_SECRET="dev-shared-secret"
+
+# Signs session cookies. Any long random string; changing it signs everyone out.
+SESSION_SECRET="dev-session-secret-change-me"
+
+# Leave unset until you have a key. The review endpoint returns a clearly
+# labelled placeholder while it is missing.
+# OPENAI_API_KEY="sk-..."
+# OPENAI_MODEL="gpt-4o-mini"

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/*
+  Tailwind is present for its base reset ONLY.
+  Every component style in this project is an inline style object.
+  The only rules below are ones that cannot be expressed inline:
+  page-level background, scroll behavior, and pseudo-element-free resets.
+*/
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #778db2;
+  color: #ffffff;
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
