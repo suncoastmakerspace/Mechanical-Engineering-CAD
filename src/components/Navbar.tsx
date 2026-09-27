@@ -14,7 +14,7 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 
 const LINKS = [
   { id: SECTION_IDS.hero, label: 'Overview' },
-  { id: SECTION_IDS.map, label: 'Schematic' },
+  { id: SECTION_IDS.map, label: 'Activities' },
   { id: SECTION_IDS.pacing, label: 'Pacing' },
   { id: SECTION_IDS.brk, label: 'Advice' },
   { id: SECTION_IDS.footer, label: "What's Next" },
@@ -172,28 +172,28 @@ export default function Navbar({ activeSection }: Props) {
                 </button>
               ))}
 
-              {ready && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    if (user) void signOut();
-                    else setShowLogin(true);
-                  }}
-                  style={{
-                    ...pill(false),
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    textAlign: 'left',
-                  }}
-                >
-                  {user ? <LogOut size={13} /> : <User size={13} />}
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {user ? user.displayName : 'Sign in'}
-                  </span>
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={() => {
+                  setOpen(false);
+                  if (user) void signOut();
+                  else setShowLogin(true);
+                }}
+                style={{
+                  ...pill(false),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  textAlign: 'left',
+                  opacity: ready ? 1 : 0.55,
+                }}
+              >
+                {user ? <LogOut size={13} /> : <User size={13} />}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user ? user.displayName : 'Sign in'}
+                </span>
+              </button>
             </nav>
           )}
         </div>
@@ -215,27 +215,39 @@ export default function Navbar({ activeSection }: Props) {
             Progress is saved against an account, so the state of this pill is
             what tells a member whether their ticks are being kept.
           */}
-          {ready && (
-            <button
-              type="button"
-              onClick={() => (user ? void signOut() : setShowLogin(true))}
-              title={user ? `Signed in as ${user.displayName}` : 'Sign in to save your progress'}
-              style={{
-                ...pill(false),
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                maxWidth: 210,
-              }}
-            >
-              {user ? <LogOut size={13} /> : <User size={13} />}
-              <span
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-              >
-                {user ? user.displayName : 'Sign in'}
-              </span>
-            </button>
-          )}
+          {/*
+            Rendered unconditionally, with a reserved width. Waiting for the
+            session probe meant the pill appeared a second after everything
+            else and shoved the row sideways as it arrived.
+          */}
+          <button
+            type="button"
+            disabled={!ready}
+            onClick={() => (user ? void signOut() : setShowLogin(true))}
+            title={
+              !ready
+                ? 'Checking your session'
+                : user
+                  ? `Signed in as ${user.displayName}`
+                  : 'Sign in to save your progress'
+            }
+            style={{
+              ...pill(false),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              minWidth: 124,
+              maxWidth: 210,
+              opacity: ready ? 1 : 0.55,
+              cursor: ready ? 'pointer' : 'default',
+            }}
+          >
+            {user ? <LogOut size={13} /> : <User size={13} />}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user ? user.displayName : 'Sign in'}
+            </span>
+          </button>
         </nav>
       )}
 

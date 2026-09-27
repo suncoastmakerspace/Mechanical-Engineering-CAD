@@ -154,6 +154,22 @@ that always fails be repeated without limit.
 
 ---
 
+## Deploying
+
+```bash
+npm run deploy
+```
+
+**Always deploy with that script, not a bare `wrangler pages deploy`.** This
+project's production branch is `production`, and wrangler otherwise infers the
+branch from git. A local branch called anything else produces a *Preview*
+deployment, and Preview has none of the environment variables, so the site
+comes up in guest mode with the review endpoint returning placeholders. It
+looks like a broken key rather than a deployment aimed at the wrong place.
+
+Environment variables are only read at build time, so a redeploy is required
+after changing any of them.
+
 ## Running it locally
 
 ```bash

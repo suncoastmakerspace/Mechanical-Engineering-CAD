@@ -29,6 +29,13 @@ type Ctx = {
   /** False when there is no reachable API, which is the normal local case. */
   online: boolean;
   progress: Progress;
+  /**
+   * Whether the last write reached the sheet. A silent failure used to look
+   * like a tick that simply did not stick after a reload.
+   */
+  saveState: 'idle' | 'saving' | 'error';
+  /** Retries whatever failed, without the reader having to re-tick anything. */
+  retrySave: () => void;
   isCheckpointDone: (id: string) => boolean;
   isGateCleared: (id: string) => boolean;
   toggleCheckpoint: (id: string, done: boolean) => void;
@@ -43,6 +50,8 @@ type Ctx = {
   ) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
+
+type Write = { kind: 'checkpoints' | 'gates'; id: string; done: boolean };
 
 const GUEST_KEY = 'mecad.progress.v1';
 const EMPTY: Progress = { checkpoints: [], gates: [] };
@@ -93,6 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState<Progress>(EMPTY);
 
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'error'>('idle');
+
   /** Guest work not yet pushed to the sheet, sent with the next write. */
   const pendingAdopt = useRef<string[]>([]);
 
@@ -139,6 +150,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  /**
+   * Pending writes, drained strictly one at a time.
+   *
+   * Firing these off in parallel was the cause of ticks that did not stick.
+   * Three separate races: two responses could come back out of order and the
+   * older one would overwrite the newer state; a request that failed was
+   * swallowed, leaving the tick on screen but nothing saved, so it vanished on
+   * the next reload; and guest progress was cleared before the server had
+   * confirmed it had taken it.
+   */
+  const queue = useRef<Write[]>([]);
+  const draining = useRef(false);
+
+  const drain = useCallback(async () => {
+    if (draining.current) return;
+    draining.current = true;
+
+    while (queue.current.length) {
+      const write = queue.current[0];
+      setSaveState('saving');
+
+      const res = await api('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: write.kind === 'gates' ? 'gate' : 'checkpoint',
+          id: write.id,
+          done: write.done,
+          ...(pendingAdopt.current.length ? { adopt: pendingAdopt.current } : {}),
+        }),
+      });
+
+      if (!res || !res.ok) {
+        // Left at the head of the queue so retrySave picks up where it stopped.
+        setSaveState('error');
+        draining.current = false;
+        return;
+      }
+
+      // Only now is the guest work definitely on the sheet.
+      pendingAdopt.current = [];
+      queue.current.shift();
+
+      const data = (await res.json()) as Progress;
+      // Safe to take the server's answer: nothing else is in flight.
+      setProgress({ checkpoints: data.checkpoints || [], gates: data.gates || [] });
+    }
+
+    setSaveState('idle');
+    draining.current = false;
+  }, []);
+
   const apply = useCallback(
     (kind: 'checkpoints' | 'gates', id: string, done: boolean) => {
       setProgress((prev) => {
@@ -153,28 +216,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!user) return;
 
-      const adopt = pendingAdopt.current;
-      pendingAdopt.current = [];
-
-      void api('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kind: kind === 'gates' ? 'gate' : 'checkpoint',
-          id,
-          done,
-          ...(adopt.length ? { adopt } : {}),
-        }),
-      }).then(async (res) => {
-        // The server is the source of truth, so take its answer back.
-        if (res?.ok) {
-          const data = (await res.json()) as Progress;
-          setProgress({ checkpoints: data.checkpoints || [], gates: data.gates || [] });
-        }
-      });
+      // Collapse repeated toggles of the same thing to the latest intent.
+      queue.current = queue.current.filter((w) => !(w.kind === kind && w.id === id));
+      queue.current.push({ kind, id, done });
+      void drain();
     },
-    [user],
+    [user, drain],
   );
+
+  const retrySave = useCallback(() => {
+    if (queue.current.length) void drain();
+    else setSaveState('idle');
+  }, [drain]);
 
   const signIn = useCallback(async (username: string, password: string) => {
     const res = await api('/api/login', {
@@ -243,6 +296,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       online,
       progress,
+      saveState,
+      retrySave,
       isCheckpointDone: (id) => progress.checkpoints.includes(id),
       isGateCleared: (id) => progress.gates.includes(id),
       toggleCheckpoint: (id, done) => apply('checkpoints', id, done),
@@ -251,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
     }),
-    [user, ready, online, progress, apply, signIn, signUp, signOut],
+    [user, ready, online, progress, saveState, retrySave, apply, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

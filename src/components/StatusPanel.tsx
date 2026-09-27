@@ -1,4 +1,5 @@
-import { alpha, blueprint, font, label } from '../design/tokens';
+import { REDLINE_INK, alpha, blueprint, font, label } from '../design/tokens';
+import { useAuth } from '../auth/AuthContext';
 
 /**
  * The persistent bottom-right readout. Same frosted construction as the nav
@@ -17,6 +18,8 @@ type Props = {
 };
 
 export default function StatusPanel({ viewing, animState }: Props) {
+  const { saveState, retrySave } = useAuth();
+
   return (
     <aside
       aria-live="polite"
@@ -35,7 +38,8 @@ export default function StatusPanel({ viewing, animState }: Props) {
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         boxShadow: '0 10px 28px rgba(0,0,0,0.22)',
-        pointerEvents: 'none',
+        // The retry needs to be clickable, so only the text ignores the pointer.
+        pointerEvents: saveState === 'error' ? 'auto' : 'none',
         maxWidth: '62vw',
       }}
     >
@@ -59,6 +63,47 @@ export default function StatusPanel({ viewing, animState }: Props) {
           {name}
         </span>
       ))}
+      {/*
+        A write that failed used to be invisible: the tick stayed on screen and
+        quietly disappeared on the next reload.
+      */}
+      {saveState === 'error' && (
+        <button
+          type="button"
+          onClick={retrySave}
+          style={{
+            marginTop: 6,
+            padding: '5px 8px',
+            border: `1px solid ${REDLINE_INK}`,
+            background: 'rgba(90,36,23,0.35)',
+            color: blueprint.line,
+            fontFamily: font.mono,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          Not saved — retry
+        </button>
+      )}
+
+      {saveState === 'saving' && (
+        <span
+          style={{
+            fontFamily: font.mono,
+            fontSize: 9,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: alpha.line55,
+            marginTop: 4,
+          }}
+        >
+          saving…
+        </span>
+      )}
+
       {animState && (
         <span
           style={{

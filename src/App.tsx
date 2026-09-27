@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Navbar from './components/Navbar';
-import { AuthProvider } from './auth/AuthContext';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import Celebration from './components/Celebration';
+import { ALL_CHECKPOINT_IDS } from './content/path';
 import StatusPanel from './components/StatusPanel';
 import type { AnimState } from './components/SmilAnimation';
 import Hero from './sections/Hero';
@@ -16,7 +18,7 @@ import { SECTION_IDS } from './design/tokens';
 const SECTION_TITLES: Record<string, string> = {
   [SECTION_IDS.hero]: 'Overview',
   [SECTION_IDS.ladder]: 'The Ladder',
-  [SECTION_IDS.map]: 'Schematic Map',
+  [SECTION_IDS.map]: 'The Activities',
   [SECTION_IDS.pacing]: 'Suggested Pacing',
   [SECTION_IDS.brk]: 'Advice',
   [SECTION_IDS.footer]: "What's Next",
@@ -89,6 +91,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <CompletionWatcher />
       <Navbar activeSection={activeSection} />
 
       <main>
@@ -110,4 +113,54 @@ export default function App() {
       />
     </AuthProvider>
   );
+}
+
+/**
+ * Pops the celebration the moment the twelfth checkpoint is ticked.
+ *
+ * Fires on the transition into completeness, not on being complete, so it does
+ * not reappear on every later visit. The keyphrase stays reachable from the map
+ * header afterwards, in case this gets dismissed before it is read.
+ */
+function CompletionWatcher() {
+  const { progress, ready, user } = useAuth();
+  const [show, setShow] = useState(false);
+  const wasComplete = useRef<boolean | null>(null);
+  const baselineFor = useRef<string | null>(null);
+
+  const done = ALL_CHECKPOINT_IDS.filter((id) => progress.checkpoints.includes(id)).length;
+  const complete = done === ALL_CHECKPOINT_IDS.length;
+
+  useEffect(() => {
+    /*
+     * Nothing is judged until the session has settled. Progress starts empty
+     * and is filled in a moment later from storage or the sheet, so watching
+     * before then reads that arrival as someone finishing the path and popped
+     * the celebration on every reload.
+     */
+    if (!ready) return;
+
+    /*
+     * Signing in or out re-baselines rather than counting as a transition.
+     * Otherwise someone who had already finished got the celebration again
+     * every time they signed in on a new device, which reads as a bug: it is
+     * meant to mark finishing, not discovering you had finished.
+     */
+    const who = user?.username ?? '';
+    if (baselineFor.current !== who) {
+      baselineFor.current = who;
+      wasComplete.current = complete;
+      return;
+    }
+
+    // The first settled pass only records where things stood.
+    if (wasComplete.current === null) {
+      wasComplete.current = complete;
+      return;
+    }
+    if (complete && !wasComplete.current) setShow(true);
+    wasComplete.current = complete;
+  }, [complete, ready, user]);
+
+  return show ? <Celebration onClose={() => setShow(false)} /> : null;
 }

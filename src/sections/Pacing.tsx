@@ -75,6 +75,9 @@ export default function Pacing() {
           <LegendSwatch kind="focused" text="FOCUSED" />
         </div>
 
+        {isMobile ? (
+          <PacingList />
+        ) : (
         <DraftingReveal threshold={0.2}>
           {(drawn) => (
             <div style={{ position: 'relative', overflowX: 'auto' }}>
@@ -244,6 +247,7 @@ export default function Pacing() {
             </div>
           )}
         </DraftingReveal>
+        )}
 
         <div style={{ marginTop: 28 }}>
           <Redline rotate={-1.5} size={isMobile ? 17 : 19} leader="none">
@@ -252,6 +256,100 @@ export default function Pacing() {
         </div>
       </div>
     </BlueprintSection>
+  );
+}
+
+/**
+ * The same schedule, stacked, for phones.
+ *
+ * Not the wide chart scaled down: at 390px that SVG would have to shrink to
+ * about a third, which takes the 13px row labels to roughly 4px. Percentage
+ * width bars in normal flow keep every label at full size and need no
+ * sideways scrolling.
+ */
+function PacingList() {
+  const hatch = `repeating-linear-gradient(45deg, ${alpha.line75} 0 1px, transparent 1px 6px)`;
+
+  return (
+    <DraftingReveal threshold={0.2}>
+      {(drawn) => (
+        <div>
+          {STAGES.map((st, i) => {
+            const ongoing = st.pacing.casualWeeks === null;
+            const pct = (w: number | null) =>
+              ongoing ? 100 : Math.max(2, ((w || 0) / AXIS_MAX) * 100);
+
+            return (
+              <div
+                key={st.id}
+                style={{
+                  padding: '14px 0',
+                  borderTop: i === 0 ? `1px solid ${alpha.line35}` : `1px dashed ${alpha.line20}`,
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    gap: 12,
+                    marginBottom: 10,
+                  }}
+                >
+                  <span style={{ ...label, fontSize: 11, color: blueprint.line }}>
+                    {st.serial}
+                  </span>
+                  <span style={{ ...label, fontSize: 10, color: alpha.line75 }}>
+                    {ongoing
+                      ? 'ONGOING'
+                      : `${st.pacing.casual.toUpperCase()} / ${st.pacing.focused.toUpperCase()}`}
+                  </span>
+                </div>
+
+                <p style={{ ...body(13), color: alpha.textPrimary, margin: '0 0 10px' }}>
+                  {st.title}
+                </p>
+
+                {/* Casual above, focused below, so the pair reads as one row. */}
+                <div
+                  style={{
+                    width: `${drawn ? pct(st.pacing.casualWeeks) : 0}%`,
+                    height: 16,
+                    background: hatch,
+                    border: `1px ${ongoing ? 'dashed' : 'solid'} ${blueprint.line}`,
+                    transition: `width 800ms cubic-bezier(0.4,0,0.2,1) ${i * 90}ms`,
+                  }}
+                />
+                <div
+                  style={{
+                    width: `${drawn ? pct(st.pacing.focusedWeeks) : 0}%`,
+                    height: 7,
+                    marginTop: 4,
+                    background: blueprint.line,
+                    opacity: ongoing ? 0.35 : 0.9,
+                    transition: `width 800ms cubic-bezier(0.4,0,0.2,1) ${i * 90 + 80}ms`,
+                  }}
+                />
+              </div>
+            );
+          })}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: 12,
+              ...label,
+              fontSize: 10,
+              color: alpha.line55,
+            }}
+          >
+            <span>0</span>
+            <span>{AXIS_MAX} WEEKS, FULL WIDTH</span>
+          </div>
+        </div>
+      )}
+    </DraftingReveal>
   );
 }
 

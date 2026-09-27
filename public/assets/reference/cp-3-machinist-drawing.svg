@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" fill="none"
+     stroke="#ffffff" stroke-width="1.6" font-family="monospace" font-size="11">
+  <!-- Reference for Checkpoint 3: a plate someone else could actually make.
+       Every feature dimensioned, units stated, tolerance noted, title block. -->
+  <g transform="translate(70,60)">
+    <rect x="0" y="0" width="260" height="130" rx="10"/>
+    <circle cx="45" cy="65" r="14"/>
+    <circle cx="215" cy="65" r="14"/>
+    <circle cx="130" cy="65" r="26"/>
+    <g stroke-dasharray="10 4 2 4" stroke-width="0.8" opacity="0.7">
+      <line x1="-14" y1="65" x2="274" y2="65"/>
+      <line x1="130" y1="-14" x2="130" y2="144"/>
+    </g>
+  </g>
+
+  <!-- Dimensions sit outside the part, on extension lines. -->
+  <g stroke-width="1">
+    <line x1="70" y1="215" x2="330" y2="215"/>
+    <path d="M70 211 L70 219 M330 211 L330 219"/>
+    <text x="185" y="209" fill="#ffffff" stroke="none">260</text>
+    <line x1="70" y1="200" x2="70" y2="220" opacity="0.5"/>
+    <line x1="330" y1="200" x2="330" y2="220" opacity="0.5"/>
+
+    <line x1="365" y1="60" x2="365" y2="190"/>
+    <path d="M361 60 L369 60 M361 190 L369 190"/>
+    <text x="374" y="128" fill="#ffffff" stroke="none">130</text>
+
+    <line x1="115" y1="125" x2="70" y2="150"/>
+    <text x="40" y="166" fill="#ffffff" stroke="none">2x &#8960;28</text>
+
+    <line x1="252" y1="103" x2="400" y2="103"/>
+    <text x="406" y="100" fill="#ffffff" stroke="none">&#8960;52</text>
+  </g>
+
+  <!-- Title block, bottom right, as on any real sheet. -->
+  <g transform="translate(300,270)" stroke-width="1.2">
+    <rect x="0" y="0" width="190" height="72"/>
+    <line x1="0" y1="26" x2="190" y2="26"/>
+    <line x1="0" y1="49" x2="190" y2="49"/>
+    <line x1="95" y1="26" x2="95" y2="72"/>
+    <text x="8" y="18" fill="#ffffff" stroke="none" font-size="10">MOUNTING PLATE</text>
+    <text x="8" y="42" fill="#ffffff" stroke="none" font-size="9">MATL: PLA</text>
+    <text x="103" y="42" fill="#ffffff" stroke="none" font-size="9">SCALE 1:2</text>
+    <text x="8" y="65" fill="#ffffff" stroke="none" font-size="9">mm</text>
+    <text x="103" y="65" fill="#ffffff" stroke="none" font-size="9">REV A</text>
+  </g>
+
+  <text x="70" y="300" fill="#ffffff" stroke="none" font-size="10" opacity="0.85">
+    GENERAL TOLERANCE +/- 0.3 UNLESS NOTED
+  </text>
+  <text x="70" y="318" fill="#ffffff" stroke="none" font-size="10" opacity="0.7">
+    ALL DIMENSIONS IN MILLIMETRES
+  </text>
+</svg>

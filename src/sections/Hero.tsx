@@ -126,6 +126,19 @@ export default function Hero() {
             {SITE.tagline}
           </p>
 
+          {/* The nodes are the work, not a diagram of it. Said before the fold. */}
+          <p
+            style={{
+              ...body(isNarrow ? 13 : isMobile ? 13.5 : 14.5),
+              maxWidth: 620,
+              color: alpha.line75,
+              marginTop: 14,
+            }}
+          >
+            The five numbered nodes below are the activities. Open one and you get its
+            projects, what to build, and the real step that finishes each.
+          </p>
+
           <div
             style={{
               display: 'flex',
@@ -143,7 +156,7 @@ export default function Hero() {
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
             >
-              Open Schematic
+              Open the 12 activities
               <ArrowDown size={13} strokeWidth={2.5} />
             </StampButton>
 

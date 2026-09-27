@@ -23,6 +23,14 @@ type Props = {
   style?: CSSProperties;
   onClick?: () => void;
   ariaLabel?: string;
+  /** Marks a card that is deliberately shut, for anyone on a screen reader. */
+  ariaDisabled?: boolean;
+  /**
+   * Rendered as data-* attributes. The map cards carry their node id this
+   * way so anything looking for one does not have to read a label that
+   * changes wording when the node is locked.
+   */
+  data?: Record<string, string | undefined>;
   interactive?: boolean;
 };
 
@@ -90,16 +98,26 @@ export default function CrosshairCard({
   style,
   onClick,
   ariaLabel,
+  ariaDisabled,
+  data,
   interactive = false,
 }: Props) {
   const line = blueprint.line;
 
+  const dataAttrs = Object.fromEntries(
+    Object.entries(data || {})
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [`data-${k}`, v]),
+  );
+
   return (
     <div
+      {...dataAttrs}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={ariaLabel}
+      aria-disabled={ariaDisabled || undefined}
       onKeyDown={
         onClick
           ? (e) => {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, CheckSquare, Lock, Square, X } from 'lucide-react';
 import CrosshairCard from '../components/primitives/CrosshairCard';
 import ReviewPanel from '../components/ReviewPanel';
+import ReferenceReveal from '../components/ReferenceReveal';
 import { useAuth } from '../auth/AuthContext';
 import DimensionDivider from '../components/primitives/DimensionDivider';
 import Redline from '../components/primitives/Redline';
@@ -34,12 +35,11 @@ import { useIsMobile } from '../hooks/useMediaQuery';
 type Props = {
   stage: Stage;
   open: boolean;
-  locked: boolean;
   onClose: () => void;
   onAnimState: (s: AnimState) => void;
 };
 
-export default function StagePanel({ stage, open, locked, onClose, onAnimState }: Props) {
+export default function StagePanel({ stage, open, onClose, onAnimState }: Props) {
   const isMobile = useIsMobile();
   const { isCheckpointDone, toggleCheckpoint, isGateCleared, toggleGate } = useAuth();
   const cleared = isGateCleared(stage.id);
@@ -322,6 +322,12 @@ export default function StagePanel({ stage, open, locked, onClose, onAnimState }
 
                   {cp.review && <ReviewPanel checkpoint={cp} />}
 
+                  {/*
+                    Available once the work is in: ticked off, or submitted for
+                    review. Before that it would just be an answer sheet.
+                  */}
+                  <ReferenceReveal checkpoint={cp} available={done} />
+
                   <button
                     type="button"
                     onClick={() => toggleCheckpoint(cp.id, !done)}
@@ -382,11 +388,17 @@ export default function StagePanel({ stage, open, locked, onClose, onAnimState }
               <p
                 style={{
                   ...body(isMobile ? 14 : 15),
-                  marginBottom: 16,
+                  marginBottom: 12,
                   color: alpha.textPrimary,
                 }}
               >
                 {stage.gate}
+              </p>
+
+              <p style={{ ...body(13), color: alpha.line75, margin: '0 0 16px' }}>
+                Nobody checks this for you. You decide when it is true and tick it
+                yourself, and you can untick it later if it turns out you were
+                being generous.
               </p>
 
               <div
@@ -422,19 +434,6 @@ export default function StagePanel({ stage, open, locked, onClose, onAnimState }
             </div>
           )}
 
-          {locked && (
-            <p
-              style={{
-                ...body(12),
-                marginTop: 22,
-                color: REDLINE_INK,
-                fontFamily: font.mono,
-              }}
-            >
-              This node is still gated by an earlier stage. You can read it, but the
-              path expects that gate cleared first.
-            </p>
-          )}
         </div>
       </div>
     </div>,

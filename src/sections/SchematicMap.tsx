@@ -2,9 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import BlueprintSection from '../components/BlueprintSection';
 import CrosshairCard from '../components/primitives/CrosshairCard';
+import ChainCross from '../components/primitives/ChainCross';
 import DraftingReveal, { revealStroke } from '../components/primitives/DraftingReveal';
 import StagePanel from './StagePanel';
-import { BAND, CARD, MAP_FIELD, STAGES, stageById, type Stage } from '../content/path';
+import {
+  ALL_CHECKPOINT_IDS,
+  BAND,
+  CARD,
+  MAP_FIELD,
+  STAGES,
+  stageById,
+  type Stage,
+} from '../content/path';
+import { KEYPHRASE } from '../components/Celebration';
 import {
   REDLINE_INK,
   SECTION_IDS,
@@ -98,8 +108,13 @@ export default function SchematicMap({
    * member's unlocks survive a reload and belong to them rather than to the
    * browser tab.
    */
-  const { isGateCleared } = useAuth();
+  const { isGateCleared, progress } = useAuth();
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const doneCount = ALL_CHECKPOINT_IDS.filter((id) =>
+    progress.checkpoints.includes(id),
+  ).length;
+  const allDone = doneCount === ALL_CHECKPOINT_IDS.length;
   const [closing, setClosing] = useState(false);
 
   const isLocked = useCallback(
@@ -119,7 +134,17 @@ export default function SchematicMap({
     [isGateCleared],
   );
 
+  /*
+   * A locked node does not open. The cards stop being buttons when they are
+   * shut, and this is the second half of that: nothing else in here, and no
+   * keyboard route, can get a gated stage on screen.
+   *
+   * Note this gates the node, never the ticking. Every "mark finished" and
+   * "mark gate cleared" control stays live wherever it appears, because the
+   * whole path runs on you deciding when something is true.
+   */
   const openStage = (s: Stage) => {
+    if (isLocked(s)) return;
     setClosing(false);
     setOpenId(s.id);
     onOpenChange(`${s.serial} ${s.title}`);
@@ -158,13 +183,48 @@ export default function SchematicMap({
         <header style={{ marginBottom: isMobile ? 34 : 48, maxWidth: 700 }}>
           <span style={{ ...label, color: alpha.line75 }}>PLATE 02</span>
           <h2 style={{ ...heading(isMobile ? 30 : 44), margin: '12px 0 14px' }}>
-            Schematic Map
+            The Activities
           </h2>
           <p style={{ ...body(isMobile ? 14 : 15), color: alpha.textPrimary }}>
-            Four stages in sequence, plus one that runs alongside the whole way. Open
-            any stage for its scope and checkpoints; two carry skill gates that hold the
-            next stage shut until you mark them cleared.
+            Every node below is a set of activities you actually do, not a diagram of
+            them. Open one for its projects, and the real step that finishes each.
           </p>
+
+          {/* Said once, plainly, because the gates otherwise look enforced. */}
+          <p style={{ ...body(isMobile ? 13.5 : 14), color: alpha.line75, marginTop: 12 }}>
+            You set the pace. Two stages carry a skill gate, and you decide when you
+            have cleared it and tick it yourself. Nothing is timed, nothing is checked,
+            and you can go back and untick anything.
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              marginTop: 18,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ ...label, color: alpha.line75 }}>
+              {doneCount} of {ALL_CHECKPOINT_IDS.length} checkpoints finished
+            </span>
+
+            {allDone && (
+              <span
+                style={{
+                  ...label,
+                  color: blueprint.bg,
+                  background: blueprint.line,
+                  padding: '5px 10px',
+                }}
+              >
+                PATH COMPLETE — KEYPHRASE{' '}
+                {/* Its own casing matters, so it opts out of the label's uppercasing. */}
+                <span style={{ textTransform: 'none' }}>{KEYPHRASE}</span>
+              </span>
+            )}
+          </div>
         </header>
 
         {wideEnoughForMap ? (
@@ -189,7 +249,6 @@ export default function SchematicMap({
         <StagePanel
           stage={openStageData}
           open={!closing}
-          locked={isLocked(openStageData)}
           onClose={closeStage}
           onAnimState={onAnimState}
         />
@@ -445,6 +504,9 @@ function ParallelBand({ stage, onOpen }: { stage: Stage; onOpen: () => void }) {
       interactive
       onClick={onOpen}
       ariaLabel={`Open ${stage.serial}: ${stage.title} (parallel track)`}
+      // The parallel band is a card on the map like any other, so anything
+      // taking an inventory of nodes can find it the same way.
+      data={{ node: stage.serial }}
       style={{
         height: '100%',
         display: 'flex',
@@ -518,9 +580,17 @@ function NodeCard({
     <div style={{ position: 'relative', height: compact ? undefined : '100%' }}>
       <CrosshairCard
         weight={2}
-        interactive
-        onClick={onOpen}
-        ariaLabel={`Open ${stage.serial}: ${stage.title}${locked ? ' (locked)' : ''}`}
+        interactive={!locked}
+        // Shut means shut: no handler, so the card is not a button, takes no
+        // focus and answers neither a click nor Enter.
+        onClick={locked ? undefined : onOpen}
+        ariaLabel={
+          locked
+            ? `${stage.serial}: ${stage.title} — locked${blockedBy ? `, finish ${blockedBy} first` : ''}`
+            : `Open ${stage.serial}: ${stage.title}`
+        }
+        ariaDisabled={locked}
+        data={{ node: stage.serial, locked: locked ? 'true' : undefined }}
         serial={stage.serial}
         readout={stage.pacing.focused.toUpperCase()}
         style={{
@@ -584,8 +654,7 @@ function NodeCard({
           }}
         >
           <span style={{ ...label, fontSize: 11, color: alpha.line75 }}>
-            {stage.checkpoints.length} CHECKPOINT
-            {stage.checkpoints.length > 1 ? 'S' : ''}
+            {stage.checkpoints.length} {stage.checkpoints.length > 1 ? 'PROJECTS' : 'PROJECT'}
           </span>
           {stage.gate && (
             <span style={{ ...label, fontSize: 11, color: alpha.line75 }}>GATE</span>
@@ -594,6 +663,7 @@ function NodeCard({
             <span style={{ ...label, fontSize: 11, color: alpha.line75 }}>ONGOING</span>
           )}
         </div>
+        {locked && <ChainCross />}
       </CrosshairCard>
     </div>
   );

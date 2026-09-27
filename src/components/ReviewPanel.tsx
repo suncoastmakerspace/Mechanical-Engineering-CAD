@@ -1,46 +1,135 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import StampButton from './primitives/StampButton';
 import type { Checkpoint } from '../content/path';
+import { stlToPng } from '../lib/stlToPng';
 import { REDLINE_INK, alpha, blueprint, body, font, label } from '../design/tokens';
 
 /**
- * Upload a photo of your work and get it looked at.
+ * Upload your work, say what you were going for, and get it scored.
  *
- * The file goes to /api/review, which holds the rubric and the API key. The
- * browser never sees either. With no key configured the endpoint answers with
- * a clearly-marked placeholder, and this panel says so rather than dressing it
- * up as real feedback.
+ * Accepts an STL as well as a picture. A vision model cannot read a mesh, so
+ * an STL is rendered to a three-view sheet in the browser first and that image
+ * is what gets sent. The alternative was telling people to go and screenshot
+ * their own CAD, which is friction for no reason when the geometry is right
+ * here.
+ *
+ * The written description is required, and not only because it makes the
+ * review better. Having to say what you were aiming for is the part that makes
+ * you notice you did not aim at anything in particular.
+ *
+ * The rubric and the API key both live in /api/review. Neither reaches the
+ * browser.
  */
 
-type Feedback = { stub: boolean; verdict: string; notes: string[] };
+type Feedback = { stub: boolean; score?: number; verdict: string; notes: string[] };
+
+const isStl = (f: File) => /\.stl$/i.test(f.name);
+/** Rejected on both sides: the reviewer cannot read a vector file. */
+const isSvg = (f: File) => f.type === 'image/svg+xml' || /\.svg$/i.test(f.name);
+
+/** Long enough to be a sentence about the part, short enough not to be a chore. */
+const MIN_DESCRIPTION = 40;
+const MAX_DESCRIPTION = 1200;
+
+/**
+ * A full review reads the whole rubric and comes back with several specific
+ * notes, so it takes the better part of a minute. Saying nothing for that long
+ * looks broken, so the wait narrates itself.
+ */
+const STAGES: [number, string][] = [
+  [0, 'Sending it over…'],
+  [3, 'Looking at the geometry…'],
+  [9, 'Checking it against the objective…'],
+  [18, 'Writing up what to fix…'],
+  [40, 'Still going. A thorough one takes a while.'],
+];
 
 export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [upload, setUpload] = useState<Blob[] | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [rendering, setRendering] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  if (!checkpoint.review) return null;
+  // Drives the staged wait copy. Only runs while a review is actually out.
+  useEffect(() => {
+    if (!busy) return;
+    setElapsed(0);
+    const started = Date.now();
+    const t = setInterval(() => setElapsed(Math.round((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [busy]);
 
-  const pick = (next: File | null) => {
+  if (!checkpoint.review) return null;
+  const takesStl = checkpoint.review.accepts.includes('.stl');
+
+  const short = description.trim().length < MIN_DESCRIPTION;
+  const ready = !!upload?.length && !short && !busy && !rendering;
+
+  const pick = async (file: File | null) => {
     setError(null);
     setFeedback(null);
-    setFile(next);
+    setNote(null);
     if (preview) URL.revokeObjectURL(preview);
-    setPreview(next ? URL.createObjectURL(next) : null);
+
+    if (!file) {
+      setUpload(null);
+      setPreview(null);
+      setName(null);
+      return;
+    }
+
+    setName(file.name);
+
+    if (isSvg(file)) {
+      setUpload(null);
+      setPreview(null);
+      setError(
+        'A vector SVG cannot be reviewed. Export it as a PNG or JPG, or screenshot it, and upload that.',
+      );
+      return;
+    }
+
+    if (!isStl(file)) {
+      setUpload([file]);
+      setPreview(URL.createObjectURL(file));
+      return;
+    }
+
+    // Render it here, so what gets reviewed is something a model can read.
+    setRendering(true);
+    try {
+      const { url, views, triangles } = await stlToPng(file);
+      // The three views go up separately; the contact sheet is what is shown.
+      setUpload(views);
+      setPreview(url);
+      setNote(`${triangles.toLocaleString()} triangles, rendered to three views for review`);
+    } catch {
+      setUpload(null);
+      setPreview(null);
+      setError('That STL could not be read. Export it again, or upload a screenshot instead.');
+    } finally {
+      setRendering(false);
+    }
   };
 
   const submit = async () => {
-    if (!file || busy) return;
+    if (!ready) return;
     setBusy(true);
     setError(null);
 
     const form = new FormData();
-    form.append('file', file);
+    // One `file` entry per image, so the endpoint reads them with getAll.
+    upload!.forEach((part, i) => form.append('file', part, `submission-${i}.png`));
     form.append('checkpointId', checkpoint.id);
+    form.append('description', description.trim().slice(0, MAX_DESCRIPTION));
 
     try {
       const res = await fetch('/api/review', {
@@ -54,7 +143,13 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
       } else {
         const data = (await res.json()) as Feedback & { error?: string };
         if (!res.ok) setError(data.error || 'That did not go through.');
-        else setFeedback({ stub: !!data.stub, verdict: data.verdict, notes: data.notes || [] });
+        else
+          setFeedback({
+            stub: !!data.stub,
+            score: typeof data.score === 'number' ? data.score : undefined,
+            verdict: data.verdict,
+            notes: data.notes || [],
+          });
       }
     } catch {
       setError('Could not reach the review service.');
@@ -63,8 +158,26 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
     }
   };
 
+  const field: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 11px',
+    background: alpha.line08,
+    border: `1px solid ${short && description.length > 0 ? REDLINE_INK : alpha.line55}`,
+    color: blueprint.line,
+    fontFamily: font.mono,
+    fontSize: 13.5,
+    lineHeight: 1.55,
+    letterSpacing: '0.02em',
+    outline: 'none',
+    minHeight: 76,
+    resize: 'vertical',
+  };
+
+  const waiting = STAGES.filter(([at]) => elapsed >= at).pop()?.[1] ?? STAGES[0][1];
+
   return (
     <div
+      data-review={checkpoint.id}
       style={{
         marginTop: 14,
         padding: 14,
@@ -73,48 +186,109 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
       }}
     >
       <span style={{ ...label, color: alpha.line75, display: 'block', marginBottom: 10 }}>
-        Get it checked
+        Get it scored
       </span>
 
       <p style={{ ...body(13), color: alpha.line75, margin: '0 0 12px' }}>
-        Upload a photo or screenshot of your work and have it looked over before you take it to
-        Mr. Chroniak.
+        {takesStl
+          ? 'Upload your STL straight from the slicer, or a photo of the printed part, and say what you were going for. You get a score out of 100 and what to fix.'
+          : 'Upload a photo or screenshot of your work and say what you were going for. You get a score out of 100 and what to fix.'}
       </p>
 
       <input
         ref={inputRef}
         type="file"
         accept={checkpoint.review.accepts}
-        onChange={(e) => pick(e.target.files?.[0] || null)}
+        onChange={(e) => void pick(e.target.files?.[0] || null)}
         style={{ display: 'none' }}
       />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <StampButton rotate={0} onClick={() => inputRef.current?.click()}>
-          <Upload size={13} strokeWidth={2.5} />
-          {file ? 'Change file' : 'Choose file'}
-        </StampButton>
+      <StampButton rotate={0} onClick={() => inputRef.current?.click()} disabled={busy || rendering}>
+        <Upload size={13} strokeWidth={2.5} />
+        {name ? 'Change file' : takesStl ? 'Choose STL or photo' : 'Choose file'}
+      </StampButton>
 
-        {file && (
-          <StampButton rotate={0} solid onClick={submit} disabled={busy}>
-            {busy ? 'Looking…' : 'Send for review'}
-          </StampButton>
-        )}
-      </div>
+      {name && (
+        <p style={{ ...label, fontSize: 10, color: alpha.line55, margin: '10px 0 0' }}>
+          {name}
+          {note ? ` — ${note}` : ''}
+        </p>
+      )}
+
+      {rendering && (
+        <p style={{ ...body(12.5), color: alpha.line75, margin: '8px 0 0' }}>
+          Rendering your model…
+        </p>
+      )}
 
       {preview && (
         <img
           src={preview}
-          alt="Your upload"
+          alt="What is being sent for review"
           style={{
             display: 'block',
-            marginTop: 14,
+            marginTop: 12,
             maxWidth: '100%',
-            maxHeight: 190,
+            maxHeight: 200,
             objectFit: 'contain',
             border: `1px solid ${alpha.line35}`,
+            background: '#fff',
           }}
         />
+      )}
+
+      <label
+        htmlFor={`desc-${checkpoint.id}`}
+        style={{ ...label, color: alpha.line75, display: 'block', margin: '16px 0 6px' }}
+      >
+        What were you going for?
+      </label>
+      <p style={{ ...body(12.5), color: alpha.line55, margin: '0 0 8px' }}>
+        What is it, what did you set out to do, and what gave you trouble. The reviewer only sees
+        the picture, so anything it cannot see, you have to say.
+      </p>
+      <textarea
+        id={`desc-${checkpoint.id}`}
+        value={description}
+        maxLength={MAX_DESCRIPTION}
+        onChange={(e) => setDescription(e.target.value)}
+        disabled={busy}
+        placeholder="A motor bracket. I wanted the two holes exactly 24mm apart and the wall thick enough not to flex. The corner gusset was the hard part."
+        style={field}
+      />
+      <p
+        style={{
+          ...label,
+          fontSize: 10,
+          color: short ? alpha.line55 : alpha.line75,
+          margin: '6px 0 0',
+          textAlign: 'right',
+        }}
+      >
+        {short
+          ? `${MIN_DESCRIPTION - description.trim().length} more characters`
+          : `${description.trim().length}/${MAX_DESCRIPTION}`}
+      </p>
+
+      <div style={{ marginTop: 14 }}>
+        <StampButton rotate={0} solid onClick={submit} disabled={!ready}>
+          {busy ? 'Reviewing…' : 'Send for review'}
+        </StampButton>
+      </div>
+
+      {!busy && !!upload?.length && short && (
+        <p style={{ ...body(12.5), color: alpha.line55, margin: '10px 0 0' }}>
+          Write a sentence or two about it first.
+        </p>
+      )}
+
+      {busy && (
+        <p
+          aria-live="polite"
+          style={{ ...body(12.5), color: alpha.line75, margin: '10px 0 0' }}
+        >
+          {waiting} <span style={{ color: alpha.line55 }}>({elapsed}s)</span>
+        </p>
       )}
 
       {error && (
@@ -134,11 +308,8 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
 
       {feedback && (
         <div
-          style={{
-            marginTop: 14,
-            paddingTop: 12,
-            borderTop: `1px solid ${alpha.line35}`,
-          }}
+          data-review-result={typeof feedback.score === 'number' ? feedback.score : 'stub'}
+          style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${alpha.line35}` }}
         >
           {feedback.stub && (
             <span
@@ -156,24 +327,59 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
             </span>
           )}
 
-          <p
+          <div
             style={{
-              fontFamily: font.mono,
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              margin: '0 0 10px',
-              color: blueprint.line,
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 14,
+              marginBottom: 12,
+              flexWrap: 'wrap',
             }}
           >
-            {feedback.verdict}
-          </p>
+            {typeof feedback.score === 'number' && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: 3,
+                  border: `2px solid ${blueprint.line}`,
+                  padding: '6px 12px',
+                  transform: 'rotate(-1.2deg)',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: font.mono,
+                    fontSize: 28,
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    color: blueprint.line,
+                  }}
+                >
+                  {feedback.score}
+                </span>
+                <span style={{ ...label, fontSize: 10, color: alpha.line75 }}>/100</span>
+              </span>
+            )}
+
+            <span
+              style={{
+                fontFamily: font.mono,
+                fontSize: 14,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: blueprint.line,
+              }}
+            >
+              {feedback.verdict}
+            </span>
+          </div>
 
           <ul style={{ margin: 0, paddingLeft: 18 }}>
-            {feedback.notes.map((note) => (
-              <li key={note} style={{ ...body(13.5), color: alpha.textPrimary, marginBottom: 6 }}>
-                {note}
+            {feedback.notes.map((n) => (
+              <li key={n} style={{ ...body(13.5), color: alpha.textPrimary, marginBottom: 6 }}>
+                {n}
               </li>
             ))}
           </ul>

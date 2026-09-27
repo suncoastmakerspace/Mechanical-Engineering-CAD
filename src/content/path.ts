@@ -36,6 +36,21 @@ export type Checkpoint = {
     /** What the model is asked to judge. */
     rubric: string;
   };
+  /**
+   * What the finished thing roughly looks like, revealed once someone has
+   * submitted or finished the checkpoint rather than up front, so it does not
+   * become something to copy before trying.
+   *
+   * `model` is a rotatable STL, generated from the OpenSCAD sources in
+   * /models. `drawing` is a flat SVG, for the two checkpoints whose deliverable
+   * is a sketch rather than a part. Swapping any of these for a photo of a real
+   * club part is a one-line change here.
+   */
+  reference?: {
+    kind: 'model' | 'drawing';
+    src: string;
+    caption: string;
+  };
 };
 
 export type Pacing = {
@@ -110,9 +125,15 @@ export const STAGES: Stage[] = [
         reward:
           'Take the sketch and the object to Mr. Chroniak. Measure the real thing with the club calipers and write the actual numbers onto your three views. Anything off by more than a millimetre means you read the object wrong, not the drawing.',
         review: {
-          accepts: 'image/*',
+          accepts: 'image/png,image/jpeg,image/webp',
           rubric:
             'A hand-drawn three-view orthographic sketch (top, front, side). Judge whether all three views are present and correctly placed relative to each other, whether the views line up so features project between them, and whether dimensions are written with units. Say plainly if a view is missing or misplaced.',
+        },
+        reference: {
+          kind: 'drawing',
+          src: '/assets/reference/cp-0-three-view.svg',
+          caption:
+            'Three views in third angle, aligned, dimensioned in mm',
         },
       },
     ],
@@ -148,6 +169,12 @@ export const STAGES: Stage[] = [
         detail: 'Extruded text on a base plate with a mounting hole.',
         reward:
           'Ask Mr. Chroniak to walk you through slicing and starting a print. Run it in PLA, then trim the supports off with the flush cutters. The nameplate goes on your bin in the makerspace, so get the text height right.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-1a-nameplate.stl',
+          caption:
+            'Base plate, raised text, one hole placed by number',
+        },
       },
       {
         id: 'Checkpoint 1b',
@@ -156,6 +183,12 @@ export const STAGES: Stage[] = [
           'A hollow box (union outer shell, subtract inner cavity) with a lid that has a lip/step so it seats correctly. This teaches boolean subtraction precision and wall thickness.',
         reward:
           'Print the box and the lid. If the lid does not seat, measure the gap with the calipers, change the clearance, and print it again. Getting the fit right on the second attempt is the whole point of this one.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-1b-enclosure.stl',
+          caption:
+            'Box and lid, shown apart. The lip is what makes it seat',
+        },
       },
       {
         id: 'Checkpoint 1c',
@@ -165,9 +198,15 @@ export const STAGES: Stage[] = [
         reward:
           'Print the bracket and bolt a small DC motor to it with M3 screws from the club hardware. Wire the motor to an ESP32-S3 on a breadboard and actually run it. If the bracket buzzes or walks across the table, your holes are too loose.',
         review: {
-          accepts: 'image/*',
+          accepts: 'image/png,image/jpeg,image/webp,.stl',
           rubric:
             'A 3D-printed or modelled L-bracket with two mounting holes per face, meant to carry a small motor. Judge whether the holes look placed by dimension rather than by eye, whether wall thickness looks adequate where the faces meet, and whether there is a fillet or gusset at the corner. Flag it if the corner is a sharp unsupported joint.',
+        },
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-1c-bracket.stl',
+          caption:
+            'Two holes per face, and a gusset rather than a bare corner',
         },
       },
     ],
@@ -213,9 +252,15 @@ export const STAGES: Stage[] = [
         reward:
           'Change one parameter, export both versions, and print them side by side. Hand both to Mr. Chroniak and say which one you would actually use and why. If the model broke when you changed the number, your sketch was not fully constrained.',
         review: {
-          accepts: 'image/*',
+          accepts: 'image/png,image/jpeg,image/webp',
           rubric:
             'A screenshot of a parametric sketch or feature tree for a rebuilt bracket. Judge whether the sketch appears fully constrained (solved, with no free geometry), whether the feature tree is ordered sensibly, and whether dimensions look driven rather than drawn to size. Say which specific geometry still looks under-defined.',
+        },
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-2a-flat-bracket.stl',
+          caption:
+            'Filleted outline: the visible sign it came from a sketch',
         },
       },
       {
@@ -224,6 +269,12 @@ export const STAGES: Stage[] = [
         detail: 'Model a pulley, knob, or bottle using Revolve.',
         reward:
           'Print this one on the resin printer rather than FDM, then wash and cure it. Resin holds a curved surface that FDM layer lines will not. Do it with Mr. Chroniak supervising, because uncured resin needs gloves.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-2b-pulley.stl',
+          caption:
+            'One profile, revolved. The groove comes for free',
+        },
       },
       {
         id: 'Checkpoint 2c',
@@ -232,6 +283,12 @@ export const STAGES: Stage[] = [
           'A shaft + a bearing/bushing hole that mates with proper clearance fit (not interference). Include a mate that allows rotation.',
         reward:
           'Print the shaft and the bushing. If it seizes or wobbles, measure both with the calipers and work out the clearance you actually got, not the one you asked for. Write that number down. You will reuse it for every fit you design this year.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-2c-shaft-bushing.stl',
+          caption:
+            'Shaft and bushing, bore 0.4mm over, which is what lets it turn',
+        },
       },
       {
         id: 'Checkpoint 2d',
@@ -240,6 +297,12 @@ export const STAGES: Stage[] = [
           "Use Onshape's gear/involute tools or a swept profile to make a simple gear pair or cam-follower mechanism. This introduces mechanism motion.",
         reward:
           'Print the pair, mount them on the bracket you made in Checkpoint 1c, and drive them with the DC motor and the ESP32. A mechanism you designed yourself, turning under power, is the payoff for the whole Onshape stage.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-2d-gear-pair.stl',
+          caption:
+            'A meshing pair. Teeth are simplified, the mechanism is the point',
+        },
       },
     ],
     gate:
@@ -278,9 +341,15 @@ export const STAGES: Stage[] = [
         reward:
           'Hand the drawing to another club member and say nothing. Have them model the part from the drawing alone. Every question they have to ask you is a dimension or a note you left off. Fix those, then hand it over again.',
         review: {
-          accepts: 'image/*',
+          accepts: 'image/png,image/jpeg,image/webp',
           rubric:
             'A dimensioned orthographic engineering drawing intended for someone else to manufacture from. Judge whether it is fully dimensioned with no missing critical feature, whether units and a tolerance or general note are stated, whether there is a title block, and whether dimensions sit outside the part with proper extension lines. Name the specific feature that could not be made from this drawing as it stands.',
+        },
+        reference: {
+          kind: 'drawing',
+          src: '/assets/reference/cp-3-machinist-drawing.svg',
+          caption:
+            'Every feature dimensioned, units and tolerance stated, title block',
         },
       },
     ],
@@ -319,6 +388,12 @@ export const STAGES: Stage[] = [
           'A part with a circular bolt pattern (e.g., a flange) driven by one parameter (bolt count).',
         reward:
           'Drive the bolt count from the design table, print two versions with different counts, and check both against the real screws in the club hardware kit. Show Mr. Chroniak the table doing the work, not you editing the sketch twice.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-4a-flange.stl',
+          caption:
+            'Bolt pattern driven by one parameter. Change the count, not the sketch',
+        },
       },
       {
         id: 'Checkpoint 4b',
@@ -327,6 +402,12 @@ export const STAGES: Stage[] = [
           'A small working mechanism, e.g. a hinge, a linear slide, or a simple gearbox, with 4+ mated parts that move correctly when dragged/simulated.',
         reward:
           'Print every part and assemble the mechanism for real. Film it moving and add the clip to the club build log. If it binds, go back and fix the mates, not the printer. A mechanism that only works in CAD does not count.',
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-4b-hinge.stl',
+          caption:
+            'Two leaves and a pin. Four parts that have to move together',
+        },
       },
       {
         id: 'Checkpoint 4c',
@@ -336,9 +417,15 @@ export const STAGES: Stage[] = [
         reward:
           'Build it, then actually use it for a week. Bring it back and tell Mr. Chroniak what you would change now that you have lived with it. Then put the part and its drawing in the club showcase. A working part with a proper drawing beside it is a portfolio piece.',
         review: {
-          accepts: 'image/*',
+          accepts: 'image/png,image/jpeg,image/webp,.stl',
           rubric:
             'A capstone part someone designed for a real need of their own, ideally shown with its drawing. Judge whether the design shows evidence of the full flow (sketch, constrained features, assembly, dimensioned drawing), whether it looks printable without heroic support, and whether the part appears sized from real measurements. Give two concrete changes that would make it better.',
+        },
+        reference: {
+          kind: 'model',
+          src: '/assets/reference/cp-4c-capstone.stl',
+          caption:
+            'A coaster with a lip and drainage. Stands in for whatever you need',
         },
       },
     ],
@@ -353,6 +440,11 @@ export const STAGES: Stage[] = [
     animation: 'arm',
   },
 ];
+
+/** Every checkpoint in the path. Completing all of them is "done". */
+export const ALL_CHECKPOINT_IDS: string[] = STAGES.flatMap((s) =>
+  s.checkpoints.map((c) => c.id),
+);
 
 /** The main chain, in order. Stage 3 is excluded: it is a parallel rail. */
 export const CHAIN: string[] = STAGES.filter((s) => !s.parallel).map((s) => s.id);
