@@ -3,6 +3,7 @@ import { Lock, Unlock } from 'lucide-react';
 import BlueprintSection from '../components/BlueprintSection';
 import CrosshairCard from '../components/primitives/CrosshairCard';
 import ChainCross from '../components/primitives/ChainCross';
+import ResourceBoxes from '../components/ResourceBoxes';
 import DraftingReveal, { revealStroke } from '../components/primitives/DraftingReveal';
 import StagePanel from './StagePanel';
 import {
@@ -227,6 +228,35 @@ export default function SchematicMap({
           </div>
         </header>
 
+        {/*
+          The payoff, stated outside the nodes. It was only ever written down
+          inside the finishing popup, so there was nothing on the page telling
+          anyone what they were working towards.
+        */}
+        <div
+          style={{
+            marginBottom: isMobile ? 30 : 44,
+            padding: isMobile ? '16px 18px' : '20px 26px',
+            border: `2px solid ${blueprint.line}`,
+            background: alpha.line08,
+          }}
+        >
+          <span style={{ ...label, fontSize: 10, color: alpha.line75 }}>Reward</span>
+          <h3 style={{ ...heading(isMobile ? 20 : 28), margin: '10px 0 0' }}>
+            Learn CAD, Get Candy
+          </h3>
+          <p
+            style={{
+              ...body(isMobile ? 13 : 14),
+              color: alpha.line75,
+              margin: '10px 0 0',
+            }}
+          >
+            Plus the MAKERSPACE badge, yours to print. Every project has a real step at
+            the end of it too, not just a tick.
+          </p>
+        </div>
+
         {wideEnoughForMap ? (
           <DesktopField
             chain={chain}
@@ -243,6 +273,12 @@ export default function SchematicMap({
             onOpen={openStage}
           />
         )}
+
+        {/*
+          Under the nodes and still on plate 2, because both are things you
+          reach for while looking at the path rather than after leaving it.
+        */}
+        <ResourceBoxes />
       </div>
 
       {openStageData && (
@@ -297,7 +333,7 @@ function DesktopField({
   /**
    * Orthogonal runs, none of which crosses a card or the band. An earlier
    * version sent the 2 -> 4 run straight through the band and bridged it with a
-   * ground-colour casing; that erased gaps in the band's borders and read as
+   * ground-color casing; that erased gaps in the band's borders and read as
    * broken line work rather than as a crossing.
    */
   const connectors = [
@@ -338,7 +374,7 @@ function DesktopField({
             style={{
               position: 'absolute',
               top: 0,
-              // Centred once the scale hits its ceiling on very wide screens.
+              // Centered once the scale hits its ceiling on very wide screens.
               left: '50%',
               width: MAP_FIELD.width,
               height: MAP_FIELD.height,

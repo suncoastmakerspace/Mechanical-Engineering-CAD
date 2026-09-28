@@ -12,7 +12,12 @@
  *
  * Expected tabs:
  *   members   username | salt | hash | displayName | createdAt
- *   progress  username | checkpoints | gates | updatedAt
+ *   progress  username | checkpoints | gates | updatedAt | reviewDay | reviewCount
+ *             | askDay | askCount
+ *
+ * The four counter columns are written by the script and are not something to
+ * fill in by hand. Existing rows do not need widening: a blank cell reads as
+ * nothing used today.
  *
  * The members tab holds a PBKDF2 hash, never a password. Generate rows with
  * `node scripts/add-member.mjs <username> <password> "<Display Name>"`.
@@ -42,6 +47,8 @@ function doPost(e) {
         return reply(addMember_(body));
       case 'claimReview':
         return reply({ ok: true, data: claimReview_(body.username, body.limit) });
+      case 'claimAsk':
+        return reply({ ok: true, data: claimAsk_(body.username, body.limit) });
       default:
         return reply({ ok: false, error: 'unknown action' });
     }
@@ -139,6 +146,46 @@ function addMember_(body) {
  * then never matches. The counter reset on every call and the quota enforced
  * nothing. An integer survives the round trip untouched.
  */
+/**
+ * The daily allowance for clarification questions, in columns 7 and 8.
+ *
+ * Deliberately a separate counter from claimReview_: a question costs a
+ * fraction of a review, so the two should not eat each other's allowance.
+ */
+function claimAsk_(username, limit) {
+  var cap = Number(limit) || 3;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = sheet_('progress');
+    var today = dayKey_();
+    var hit = findRow_(sh, username);
+
+    if (!hit) {
+      sh.appendRow([
+        String(username).toLowerCase(),
+        '[]',
+        '[]',
+        new Date().toISOString(),
+        '',
+        '',
+        today,
+        1,
+      ]);
+      return { allowed: true, used: 1, limit: cap };
+    }
+
+    var used = Number(hit.values[6]) === today ? Number(hit.values[7]) || 0 : 0;
+
+    if (used >= cap) return { allowed: false, used: used, limit: cap };
+
+    sh.getRange(hit.row, 7, 1, 2).setValues([[today, used + 1]]);
+    return { allowed: true, used: used + 1, limit: cap };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function dayKey_() {
   var d = new Date();
   return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();

@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc -p functions/tsconfig.json",
     "dev:cf": "vite build && wrangler pages dev dist",
+    "build:glossary": "node scripts/build-glossary.mjs",
     "mock-sheet": "node scripts/mock-sheet.mjs",
     "add-member": "node scripts/add-member.mjs",
     "deploy": "vite build && wrangler pages deploy dist --project-name mech-engineering-web --branch production"

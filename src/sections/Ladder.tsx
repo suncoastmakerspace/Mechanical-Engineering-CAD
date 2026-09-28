@@ -103,7 +103,7 @@ export default function Ladder() {
                   padding: isMobile ? '11px 0' : '13px 0',
                   borderTop: i === 0 ? `1px solid ${sand.base}` : `1px dashed ${sand.base}`,
                   // The Fusion rung is after this path, not on it. Dimmed by
-                  // colour rather than opacity, which would stack on top of an
+                  // color rather than opacity, which would stack on top of an
                   // already low-contrast tone.
                   opacity: rung.ahead ? 0.82 : 1,
                 }}

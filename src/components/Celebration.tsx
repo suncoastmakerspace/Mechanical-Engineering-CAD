@@ -106,7 +106,7 @@ export default function Celebration({ onClose }: { onClose: () => void }) {
           </p>
 
           <div style={{ marginBottom: 18 }}>
-            <ModelViewer src={BADGE_STL} caption="Your badge. Print it in whatever colour" />
+            <ModelViewer src={BADGE_STL} caption="Your badge. Print it in whatever color you like" />
             <div style={{ marginTop: 12 }}>
               <StampButton
                 rotate={0}
@@ -118,7 +118,7 @@ export default function Celebration({ onClose }: { onClose: () => void }) {
                 }}
               >
                 <Download size={13} strokeWidth={2.5} />
-                Download the STL
+                Download the file to print
               </StampButton>
             </div>
           </div>

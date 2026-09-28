@@ -68,7 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
     if (result.reason === 'roster full') {
       return json(
-        { error: 'The roster is full. Ask Mr. Chroniak to make room.' },
+        { error: 'The roster is full. Ask whoever runs the club to make room.' },
         { status: 507 },
       );
     }

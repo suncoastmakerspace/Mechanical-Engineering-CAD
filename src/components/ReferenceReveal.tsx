@@ -8,23 +8,24 @@ import { alpha, body, label } from '../design/tokens';
 /**
  * "Here is roughly what you were aiming at."
  *
- * Deliberately behind a click even once it is available: handed over
- * automatically it becomes a thing to copy, and the point of the checkpoint is
- * the attempt. It only appears at all once the work has been submitted or
- * marked finished.
+ * Available on every checkpoint from the start, and still behind a click.
+ *
+ * It used to unlock only once the work was submitted or ticked, on the
+ * reasoning that an answer handed over up front becomes a thing to copy. The
+ * click is what actually carries that: nobody sees a reference by accident, and
+ * someone who is stuck and wants to see a worked example should not have to
+ * claim they finished in order to get one.
  */
 
 type Props = {
   checkpoint: Checkpoint;
-  /** True once this checkpoint has been submitted for review or ticked off. */
-  available: boolean;
 };
 
-export default function ReferenceReveal({ checkpoint, available }: Props) {
+export default function ReferenceReveal({ checkpoint }: Props) {
   const [open, setOpen] = useState(false);
   const ref = checkpoint.reference;
 
-  if (!ref || !available) return null;
+  if (!ref) return null;
 
   return (
     <div
@@ -41,7 +42,8 @@ export default function ReferenceReveal({ checkpoint, available }: Props) {
             See one that works
           </StampButton>
           <p style={{ ...body(12.5), color: alpha.line55, margin: '10px 0 0' }}>
-            A reference, not a template. Yours does not have to match it.
+            A reference, not a template. Look whenever you like, before or after. Yours
+            does not have to match it.
           </p>
         </>
       ) : (

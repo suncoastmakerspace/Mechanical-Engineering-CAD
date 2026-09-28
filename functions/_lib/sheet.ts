@@ -17,6 +17,8 @@ export type Env = {
   OPENAI_MODEL?: string;
   /** Reviews allowed per member per day. Defaults to 20. */
   REVIEW_LIMIT?: string;
+  /** Clarification questions per member per day. Defaults to 3. */
+  ASK_LIMIT?: string;
 };
 
 export type MemberRow = {
@@ -89,6 +91,29 @@ export async function addMember(
  */
 export function claimReview(env: Env, username: string, limit: number): Promise<ReviewClaim> {
   return call<ReviewClaim>(env, 'claimReview', { username, limit });
+}
+
+/**
+ * The daily allowance for clarification questions, counted separately from
+ * reviews because a question costs a fraction of one.
+ *
+ * Falls back to the review counter when the deployed Apps Script predates
+ * `claimAsk`. That shares one allowance, which is not what was intended, but
+ * the alternative on an un-updated script is an uncapped paid endpoint.
+ */
+export async function claimAsk(
+  env: Env,
+  username: string,
+  limit: number,
+): Promise<ReviewClaim> {
+  try {
+    return await call<ReviewClaim>(env, 'claimAsk', { username, limit });
+  } catch (err) {
+    if (err instanceof SheetUnavailable && /unknown action/i.test(err.message)) {
+      return call<ReviewClaim>(env, 'claimReview', { username, limit });
+    }
+    throw err;
+  }
 }
 
 export function setProgress(

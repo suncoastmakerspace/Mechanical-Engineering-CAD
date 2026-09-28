@@ -28,8 +28,11 @@ const isStl = (f: File) => /\.stl$/i.test(f.name);
 /** Rejected on both sides: the reviewer cannot read a vector file. */
 const isSvg = (f: File) => f.type === 'image/svg+xml' || /\.svg$/i.test(f.name);
 
-/** Long enough to be a sentence about the part, short enough not to be a chore. */
-const MIN_DESCRIPTION = 40;
+/*
+ * No minimum. Saying what you were going for genuinely improves the review, so
+ * the box asks for it and explains why, but making it a gate turned a two-click
+ * upload into homework. Anyone who wants to just send the file can.
+ */
 const MAX_DESCRIPTION = 1200;
 
 /**
@@ -70,8 +73,7 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
   if (!checkpoint.review) return null;
   const takesStl = checkpoint.review.accepts.includes('.stl');
 
-  const short = description.trim().length < MIN_DESCRIPTION;
-  const ready = !!upload?.length && !short && !busy && !rendering;
+  const ready = !!upload?.length && !busy && !rendering;
 
   const pick = async (file: File | null) => {
     setError(null);
@@ -114,7 +116,10 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
     } catch {
       setUpload(null);
       setPreview(null);
-      setError('That STL could not be read. Export it again, or upload a screenshot instead.');
+      setError(
+        'That STL file could not be read. Save it out of your CAD program again, or upload a '
+          + 'screenshot instead.',
+      );
     } finally {
       setRendering(false);
     }
@@ -147,8 +152,13 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
           setFeedback({
             stub: !!data.stub,
             score: typeof data.score === 'number' ? data.score : undefined,
-            verdict: data.verdict,
-            notes: data.notes || [],
+            verdict: typeof data.verdict === 'string' ? data.verdict : 'Reviewed',
+            // Only strings get rendered. A note that arrives as an object is a
+            // React child that throws, which took the whole panel down with it
+            // rather than degrading to one missing line.
+            notes: Array.isArray(data.notes)
+              ? data.notes.filter((n): n is string => typeof n === 'string' && n.length > 0)
+              : [],
           });
       }
     } catch {
@@ -162,7 +172,7 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
     width: '100%',
     padding: '10px 11px',
     background: alpha.line08,
-    border: `1px solid ${short && description.length > 0 ? REDLINE_INK : alpha.line55}`,
+    border: `1px solid ${alpha.line55}`,
     color: blueprint.line,
     fontFamily: font.mono,
     fontSize: 13.5,
@@ -191,8 +201,8 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
 
       <p style={{ ...body(13), color: alpha.line75, margin: '0 0 12px' }}>
         {takesStl
-          ? 'Upload your STL straight from the slicer, or a photo of the printed part, and say what you were going for. You get a score out of 100 and what to fix.'
-          : 'Upload a photo or screenshot of your work and say what you were going for. You get a score out of 100 and what to fix.'}
+          ? 'Upload your STL file, which is what CAD saves out for printing, or just a photo of the part. You get a score out of 100 and what to fix.'
+          : 'Upload a photo or screenshot of your work. You get a score out of 100 and what to fix.'}
       </p>
 
       <input
@@ -241,11 +251,11 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
         htmlFor={`desc-${checkpoint.id}`}
         style={{ ...label, color: alpha.line75, display: 'block', margin: '16px 0 6px' }}
       >
-        What were you going for?
+        What were you going for? <span style={{ textTransform: 'none' }}>(optional)</span>
       </label>
       <p style={{ ...body(12.5), color: alpha.line55, margin: '0 0 8px' }}>
-        What is it, what did you set out to do, and what gave you trouble. The reviewer only sees
-        the picture, so anything it cannot see, you have to say.
+        Skip it if you like. It does help though: the reviewer only sees the picture, so anything
+        it cannot see, only you can tell it.
       </p>
       <textarea
         id={`desc-${checkpoint.id}`}
@@ -256,31 +266,25 @@ export default function ReviewPanel({ checkpoint }: { checkpoint: Checkpoint }) 
         placeholder="A motor bracket. I wanted the two holes exactly 24mm apart and the wall thick enough not to flex. The corner gusset was the hard part."
         style={field}
       />
-      <p
-        style={{
-          ...label,
-          fontSize: 10,
-          color: short ? alpha.line55 : alpha.line75,
-          margin: '6px 0 0',
-          textAlign: 'right',
-        }}
-      >
-        {short
-          ? `${MIN_DESCRIPTION - description.trim().length} more characters`
-          : `${description.trim().length}/${MAX_DESCRIPTION}`}
-      </p>
+      {description.length > 0 && (
+        <p
+          style={{
+            ...label,
+            fontSize: 10,
+            color: alpha.line55,
+            margin: '6px 0 0',
+            textAlign: 'right',
+          }}
+        >
+          {description.trim().length}/{MAX_DESCRIPTION}
+        </p>
+      )}
 
       <div style={{ marginTop: 14 }}>
         <StampButton rotate={0} solid onClick={submit} disabled={!ready}>
           {busy ? 'Reviewing…' : 'Send for review'}
         </StampButton>
       </div>
-
-      {!busy && !!upload?.length && short && (
-        <p style={{ ...body(12.5), color: alpha.line55, margin: '10px 0 0' }}>
-          Write a sentence or two about it first.
-        </p>
-      )}
 
       {busy && (
         <p

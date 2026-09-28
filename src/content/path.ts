@@ -95,11 +95,11 @@ export type Stage = {
 export const SITE = {
   name: 'Mechanical Engineering with CAD',
   docSerial: 'DOC-001',
-  subtitle: 'Tinkercad to Pre-Fusion',
+  subtitle: 'From Tinkercad to almost Fusion',
   tagline:
-    'A progressive, checkpoint-based path from zero CAD experience to intermediate parametric modeling. Each stage ends with a project you can finish before moving on. It is designed to cover a wide variety of topics so that you can be prepared for creating more advanced projects later on in the year.',
+    'A step-by-step path from never having opened CAD to being comfortable in it. CAD is short for computer-aided design: drawing a part on a computer accurately enough that it could actually be made. Each node ends with a project you finish before moving on, and between them they cover enough ground for the harder builds later in the year.',
   outro:
-    "After this, Fusion 360 is a small jump because you'll already know sketch constraints, features, and assemblies; Fusion mainly adds better simulation, CAM, and generative design on top of what you've learned.",
+    'After this, Fusion 360 is a small step rather than a new start. You will already know how to lock a drawing down, build it up into a part, and join parts together. Fusion mostly adds testing a part before you make it, telling a cutting machine what to do, and letting the software suggest shapes for you.',
 } as const;
 
 export const STAGES: Stage[] = [
@@ -108,26 +108,26 @@ export const STAGES: Stage[] = [
     serial: 'NODE-00',
     index: 0,
     title: 'Foundations',
-    subtitle: 'before touching software',
+    subtitle: 'on paper, before any software',
     intro:
-      'Groundwork done on paper. Nothing here needs a computer, and skipping it is the most common reason later stages feel arbitrary.',
+      'All on paper. Nothing here needs a computer, and it is the part people skip, which is why the later stages start feeling like random button-pressing.',
     learn: [
-      'Learn to read a basic engineering drawing: orthographic views, dimensions, units.',
-      'Learn the 3 primary planes (XY, XZ, YZ) and right-hand coordinate system.',
-      'Learn basic units/tolerance concepts: mm vs in, +/- tolerance, fit (clearance vs press).',
+      'How to read a basic engineering drawing: the three flat views, the measurements, and the units.',
+      'The three flat surfaces every design program starts you on, and which way the x, y and z directions point.',
+      'Millimeters against inches, what a plus-or-minus number means, and the difference between a part that slides and one that grips.',
     ],
     checkpoints: [
       {
         id: 'Checkpoint 0',
         title: 'Three-view sketch',
         detail:
-          'Sketch three views (top/front/side) of a simple object on your desk.',
+          'Pick something small off your desk and draw it three times on paper: looking down at it, looking at its front, and looking at its side. No software yet.',
         reward:
-          'Take the sketch and the object to Mr. Chroniak. Measure the real thing with the club calipers and write the actual numbers onto your three views. Anything off by more than a millimetre means you read the object wrong, not the drawing.',
+          'Measure the real object with the club calipers and write the actual millimeter numbers onto your three views. Then hand the sketch to another member and see whether they can tell what it is without you saying anything.',
         review: {
           accepts: 'image/png,image/jpeg,image/webp',
           rubric:
-            'A hand-drawn three-view orthographic sketch (top, front, side). Judge whether all three views are present and correctly placed relative to each other, whether the views line up so features project between them, and whether dimensions are written with units. Say plainly if a view is missing or misplaced.',
+            'A hand-drawn three-view sketch (top, front and side) of a small object. Look for: all three views present; the views roughly lined up, so a feature sits above or beside its other view; and numbers written on with units. That is the whole of what was asked. It is a pencil sketch, so judge the content and not the neatness.',
         },
         reference: {
           kind: 'drawing',
@@ -152,23 +152,23 @@ export const STAGES: Stage[] = [
     serial: 'NODE-01',
     index: 1,
     title: 'Tinkercad',
-    subtitle: 'solid-based, beginner CAD',
+    subtitle: 'drag shapes together, no drawing yet',
     intro:
-      'Tinkercad teaches solid modeling through boolean operations (add/subtract shapes) with no sketching required, which makes it the right entry point.',
+      'Tinkercad lets you build by sticking shapes together and cutting shapes away, with no drawing to learn first. That is why it goes at the front.',
     learn: [
-      'Placing/moving/scaling primitive shapes',
-      'Grouping (union) and hole objects (subtraction)',
-      'Aligning and snapping',
-      'Workplanes for angled features',
-      'Exporting STL',
+      'Placing, moving and resizing basic shapes',
+      'Sticking shapes together, and using a shape as a hole to cut with',
+      'Lining things up so they are actually centered, not nearly centered',
+      'Workplanes, for when you need to build on a slope',
+      'Saving your work as an STL file, which is simply the file format a printer can read',
     ],
     checkpoints: [
       {
         id: 'Checkpoint 1a',
         title: 'Nameplate / Keychain',
-        detail: 'Extruded text on a base plate with a mounting hole.',
+        detail: 'Put your name on a flat plate, raised up so you can feel it, with a hole in one corner so it could hang on something.',
         reward:
-          'Ask Mr. Chroniak to walk you through slicing and starting a print. Run it in PLA, then trim the supports off with the flush cutters. The nameplate goes on your bin in the makerspace, so get the text height right.',
+          'Check with the ruler tool that your letters are at least 2mm tall and stand at least 1mm off the plate. Anything thinner than that vanishes on a real object. Fix it if it is under, then show someone and see if they can read it at arm length.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-1a-nameplate.stl',
@@ -180,9 +180,9 @@ export const STAGES: Stage[] = [
         id: 'Checkpoint 1b',
         title: 'Enclosure Box',
         detail:
-          'A hollow box (union outer shell, subtract inner cavity) with a lid that has a lip/step so it seats correctly. This teaches boolean subtraction precision and wall thickness.',
+          'A hollow box with a lid that actually sits on it. You build the outside first, then use a Hole shape to scoop out the middle.',
         reward:
-          'Print the box and the lid. If the lid does not seat, measure the gap with the calipers, change the clearance, and print it again. Getting the fit right on the second attempt is the whole point of this one.',
+          'Check the walls are the same thickness all the way round, and that the lid lip is slightly smaller than the opening so it can drop in. Write down the gap you left. That gap is called clearance, and you will be choosing it for the rest of the year.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-1b-enclosure.stl',
@@ -194,13 +194,13 @@ export const STAGES: Stage[] = [
         id: 'Checkpoint 1c',
         title: 'Simple Bracket',
         detail:
-          'An L-shaped bracket with 2 mounting holes on each face, correctly dimensioned to hold something (e.g., mount a 9g servo).',
+          'An L-shaped bracket, like a shelf corner, with two holes on each face so it can bolt to something and hold a small motor.',
         reward:
-          'Print the bracket and bolt a small DC motor to it with M3 screws from the club hardware. Wire the motor to an ESP32-S3 on a breadboard and actually run it. If the bracket buzzes or walks across the table, your holes are too loose.',
+          'Type the hole positions in as numbers instead of dragging them into place. Then check the distance between the two holes against the thing you actually want to bolt on. If you do not know that distance, go and measure it with the calipers first.',
         review: {
           accepts: 'image/png,image/jpeg,image/webp,.stl',
           rubric:
-            'A 3D-printed or modelled L-bracket with two mounting holes per face, meant to carry a small motor. Judge whether the holes look placed by dimension rather than by eye, whether wall thickness looks adequate where the faces meet, and whether there is a fillet or gusset at the corner. Flag it if the corner is a sharp unsupported joint.',
+            'An L-shaped bracket with two mounting holes on each face, meant to hold a small motor. Look for: two holes on each face; holes that are round and a sensible size for a small bolt; the two faces meeting at a right angle; and whether the inside corner has a gusset (a triangular web across it) or a fillet (a rounded blend) rather than a bare sharp joint. Judge only what the views show.',
         },
         reference: {
           kind: 'model',
@@ -232,29 +232,29 @@ export const STAGES: Stage[] = [
     serial: 'NODE-02',
     index: 2,
     title: 'Onshape',
-    subtitle: 'free, browser-based, parametric/sketch-driven',
+    subtitle: 'free in your browser, built on dimensions',
     intro:
-      'Onshape introduces real parametric CAD: 2D sketches + constraints + features, which is the industry-standard workflow (same logic as SolidWorks/Fusion).',
+      'Onshape is where you start drawing with real dimensions instead of eyeballing shapes. It is how the professional programs work too, so what you learn here carries straight over.',
     learn: [
-      '2D sketching: lines, circles, fillets, dimensions',
-      'Sketch constraints (coincident, tangent, symmetric, equal) and fully-constrained sketches',
-      'Extrude, Revolve, Sweep, Loft',
-      'Fillet/Chamfer, Shell',
-      'Mates/assemblies (basic): fastened, revolute, slider',
-      'Feature tree editing (going back and editing a step without redoing the model)',
+      'Flat drawing: lines, circles, rounded corners, and putting measurements on them',
+      'Locking a drawing down so nothing can wobble: touching, parallel, symmetric, equal',
+      'Turning a flat drawing into a solid: pull it up, spin it round, or run it along a path',
+      'Rounding and cutting corners, and hollowing a part out',
+      'Putting parts together and saying how they move: fixed, hinged, or sliding',
+      'Going back and changing an earlier step without rebuilding the whole thing',
     ],
     checkpoints: [
       {
         id: 'Checkpoint 2a',
-        title: 'Flat Bracket, redone parametrically',
+        title: 'The same bracket, built from a drawing',
         detail:
-          'Rebuild your Tinkercad bracket as a sketch (not primitives), fully constrained, then extrude. Change one dimension and confirm the whole part updates correctly.',
+          'Build that same bracket again, but this time draw it with dimensions instead of stacking blocks. Then change one number and watch the whole part resize itself.',
         reward:
-          'Change one parameter, export both versions, and print them side by side. Hand both to Mr. Chroniak and say which one you would actually use and why. If the model broke when you changed the number, your sketch was not fully constrained.',
+          'Change one measurement and watch whether everything else follows it. If anything breaks or drifts, parts of your drawing are still free to move, and you need to pin them down with more measurements. Keep going until you can change that one number and the part just works.',
         review: {
           accepts: 'image/png,image/jpeg,image/webp',
           rubric:
-            'A screenshot of a parametric sketch or feature tree for a rebuilt bracket. Judge whether the sketch appears fully constrained (solved, with no free geometry), whether the feature tree is ordered sensibly, and whether dimensions look driven rather than drawn to size. Say which specific geometry still looks under-defined.',
+            'A screenshot of a bracket rebuilt from a drawing rather than from stacked blocks. Look for: a recognisable bracket shape; the mounting holes present; and whether the screenshot shows a sketch or a list of steps at all, which is the visible evidence it was built from a drawing. A picture cannot show whether a measurement was typed in or dragged, so do not guess at that and do not count it against the work.',
         },
         reference: {
           kind: 'model',
@@ -266,9 +266,9 @@ export const STAGES: Stage[] = [
       {
         id: 'Checkpoint 2b',
         title: 'Revolved Part',
-        detail: 'Model a pulley, knob, or bottle using Revolve.',
+        detail: 'Draw half the outline of something round, like a knob or a pulley, and spin it around a line to make it solid.',
         reward:
-          'Print this one on the resin printer rather than FDM, then wash and cure it. Resin holds a curved surface that FDM layer lines will not. Do it with Mr. Chroniak supervising, because uncured resin needs gloves.',
+          'Check your half-outline actually touches the spin line with no gap, or you get a hole straight through the middle. Then spin the finished part round and look for any surface you could not reach with a piece of sandpaper.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-2b-pulley.stl',
@@ -280,9 +280,9 @@ export const STAGES: Stage[] = [
         id: 'Checkpoint 2c',
         title: 'Two-Part Assembly',
         detail:
-          'A shaft + a bearing/bushing hole that mates with proper clearance fit (not interference). Include a mate that allows rotation.',
+          'A rod, and a hole for it to turn inside. The hole has to be a little bigger than the rod, and you tell Onshape the two are allowed to spin against each other.',
         reward:
-          'Print the shaft and the bushing. If it seizes or wobbles, measure both with the calipers and work out the clearance you actually got, not the one you asked for. Write that number down. You will reuse it for every fit you design this year.',
+          'Write down the rod diameter and the hole diameter, and subtract one from the other. That difference is your clearance. Keep the number somewhere you will find it again, because every fit you design from here starts with it.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-2c-shaft-bushing.stl',
@@ -294,9 +294,9 @@ export const STAGES: Stage[] = [
         id: 'Checkpoint 2d',
         title: 'Gear or Cam',
         detail:
-          "Use Onshape's gear/involute tools or a swept profile to make a simple gear pair or cam-follower mechanism. This introduces mechanism motion.",
+          'Two gears whose teeth fit together, or a cam that pushes a follower up and down. Onshape draws the teeth for you, so you do not have to.',
         reward:
-          'Print the pair, mount them on the bracket you made in Checkpoint 1c, and drive them with the DC motor and the ESP32. A mechanism you designed yourself, turning under power, is the payoff for the whole Onshape stage.',
+          'Drag one gear and check the other one turns with it instead of passing straight through. Count the teeth on both, work out the ratio, then explain to another member which way the second gear spins and why.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-2d-gear-pair.stl',
@@ -324,26 +324,26 @@ export const STAGES: Stage[] = [
     serial: 'NODE-03',
     index: 3,
     title: 'Design-for-purpose concepts',
-    subtitle: 'parallel, not software',
-    intro: 'Layer these in as you do Stage 2 & 3 projects:',
+    subtitle: 'ideas to pick up as you go',
+    intro: 'Pick these up alongside the other nodes. They are ideas, not software:',
     learn: [
-      'Tolerancing & fits: clearance vs. press fit, why 3D printers need ~0.2-0.4mm clearance',
-      'DFM (Design for Manufacturing): draft angles, min wall thickness, overhangs for 3D printing/injection molding',
-      'Basic GD&T vocabulary: flatness, concentricity, datum, just enough to read a real drawing',
-      'Material selection basics: why PLA != steel != aluminum for a given load',
+      'Fits: when a part should slide and when it should grip, and why printers need roughly 0.2 to 0.4mm of gap',
+      'Designing something that can actually be made: how thin a wall can get, and why steep overhangs print badly',
+      'Enough of the words to read a real drawing: flat, centered, and what a datum is, which is just the edge or face that everything else is measured from',
+      'Choosing a material, and why plastic, steel and aluminum are not swappable',
     ],
     checkpoints: [
       {
         id: 'Checkpoint 3',
         title: 'Machinist-ready drawing',
         detail:
-          'Take any Stage 2 part and produce a proper dimensioned 2D drawing (orthographic + one dimension set) from it, as if handing it to a machinist.',
+          'Take any part you have made and turn it into a flat drawing with measurements written on it, the kind you could hand to someone who has to make the thing.',
         reward:
-          'Hand the drawing to another club member and say nothing. Have them model the part from the drawing alone. Every question they have to ask you is a dimension or a note you left off. Fix those, then hand it over again.',
+          'Hand the drawing to another club member and say nothing at all. Have them model the part from your drawing alone. Every question they have to ask you is a measurement or a note you left off. Fix those, then hand it over again.',
         review: {
           accepts: 'image/png,image/jpeg,image/webp',
           rubric:
-            'A dimensioned orthographic engineering drawing intended for someone else to manufacture from. Judge whether it is fully dimensioned with no missing critical feature, whether units and a tolerance or general note are stated, whether there is a title block, and whether dimensions sit outside the part with proper extension lines. Name the specific feature that could not be made from this drawing as it stands.',
+            'A dimensioned engineering drawing, meant for somebody else to make the part from. Look for: measurements written on the part; units or a general note stated somewhere; a title block, usually in the bottom right; and measurements sitting outside the outline with thin lines pointing at what they measure. Name any obvious feature that carries no measurement at all.',
         },
         reference: {
           kind: 'drawing',
@@ -370,24 +370,24 @@ export const STAGES: Stage[] = [
     serial: 'NODE-04',
     index: 4,
     title: 'SolidWorks or Onshape Advanced',
-    subtitle: 'parametric CAD, intermediate',
+    subtitle: 'same ideas, more control',
     intro:
-      'This is the last stage before Fusion: full parametric assemblies with real engineering features.',
+      'The last node before Fusion 360. Same thinking as Onshape, with the tools that let one number drive a whole family of parts.',
     learn: [
-      'Patterns (linear, circular, mirror)',
-      'Configurations / design tables (same part, multiple sizes)',
-      'Assembly mates beyond basics: cam, gear, path mates',
-      'Sheet metal basics (bends, flat pattern), optional but useful',
-      'Simple FEA/stress check (if available), just to see stress concentrations at fillets vs. sharp corners',
+      'Repeating a feature in a row, a ring, or mirrored across the part',
+      'One part, several sizes, driven from a table of numbers',
+      'Trickier ways to connect parts: gears, cams, and following a path',
+      'Sheet metal: bending a part, and flattening it back out. Optional, but handy',
+      'A basic stress check if the software has one, just to see why a rounded corner survives and a sharp one cracks',
     ],
     checkpoints: [
       {
         id: 'Checkpoint 4a',
-        title: 'Patterned Part',
+        title: 'One number, many holes',
         detail:
-          'A part with a circular bolt pattern (e.g., a flange) driven by one parameter (bolt count).',
+          'A round plate with a ring of bolt holes in it, set up so that changing one number changes how many holes there are.',
         reward:
-          'Drive the bolt count from the design table, print two versions with different counts, and check both against the real screws in the club hardware kit. Show Mr. Chroniak the table doing the work, not you editing the sketch twice.',
+          'Set the bolt count to 4, then 6, then 8, and check the holes stay evenly spaced every time. If you have to nudge anything by hand between changes, the number is not really driving the pattern yet.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-4a-flange.stl',
@@ -397,11 +397,11 @@ export const STAGES: Stage[] = [
       },
       {
         id: 'Checkpoint 4b',
-        title: 'Multi-Part Functional Assembly',
+        title: 'Something that actually moves',
         detail:
-          'A small working mechanism, e.g. a hinge, a linear slide, or a simple gearbox, with 4+ mated parts that move correctly when dragged/simulated.',
+          'Something that moves. A hinge, a sliding drawer, a simple gearbox. Four or more parts that move properly when you drag them.',
         reward:
-          'Print every part and assemble the mechanism for real. Film it moving and add the clip to the club build log. If it binds, go back and fix the mates, not the printer. A mechanism that only works in CAD does not count.',
+          'Drag it through its whole range of movement and watch for parts sliding through each other. Record a short screen capture of it moving and add that to the club build log. If it jams, fix the joins you set up between the parts rather than reshaping the parts themselves.',
         reference: {
           kind: 'model',
           src: '/assets/reference/cp-4b-hinge.stl',
@@ -411,15 +411,15 @@ export const STAGES: Stage[] = [
       },
       {
         id: 'Checkpoint 4c',
-        title: 'Capstone',
+        title: 'Capstone: your own design',
         detail:
-          'Design something real you actually need (a mount for a cap, or a coaster for a drink). Full flow: sketch to constrained features to assembly to dimensioned drawing.',
+          'Design something you actually want, the whole way through: draw it, build it up into a part, assemble the pieces, then make a drawing of it.',
         reward:
-          'Build it, then actually use it for a week. Bring it back and tell Mr. Chroniak what you would change now that you have lived with it. Then put the part and its drawing in the club showcase. A working part with a proper drawing beside it is a portfolio piece.',
+          'This is the one you print. Run it through the slicer first, which is the program that turns your model into the moves a printer follows, then start the print and trim the leftover support bits off with the flush cutters. Use the part for a week, then write down what you would change now you have lived with it, and put the part and its drawing in the club showcase.',
         review: {
           accepts: 'image/png,image/jpeg,image/webp,.stl',
           rubric:
-            'A capstone part someone designed for a real need of their own, ideally shown with its drawing. Judge whether the design shows evidence of the full flow (sketch, constrained features, assembly, dimensioned drawing), whether it looks printable without heroic support, and whether the part appears sized from real measurements. Give two concrete changes that would make it better.',
+            'A part somebody designed for a real need of their own, ideally shown with its drawing. Look for: a part that plainly does the job it was made for; signs of more than one stage of work, such as a sketch, a list of steps, an assembly or a drawing alongside it; and a shape that could be made without extreme overhangs. Give two concrete changes that would improve it. Do not speculate about how it was measured.',
         },
         reference: {
           kind: 'model',

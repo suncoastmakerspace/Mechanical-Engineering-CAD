@@ -15,7 +15,7 @@ Finish all 12 and you get a badge STL to print, plus the keyphrase.
 - **Accounts:** Progress saved per member.
 - **AI Feedback:** Upload your work on 5 of the projects and get it scored out of 100, with specific notes on what to fix.
 - **STL Upload:** Interactive STL preview in the browser before review, so you do not have to screenshot.
-- **Reference Models:** Revealed only after you finish a project, so they are not something to copy first.
+- **Reference Models:** Available on any project at any time, behind a click, so you can see one that works whenever you are stuck.
 - **Offline Support:** Works with no backend at all. Progress falls back to local storage, and signing in later carries it over.
 
 ## Stack

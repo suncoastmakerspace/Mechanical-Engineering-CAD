@@ -166,7 +166,7 @@ export default function SmilAnimation({
     border: 'none',
     // The panel beneath owns all interaction; the artwork is decorative.
     pointerEvents: 'none',
-    // Flatten the asset's own colours into the blueprint palette.
+    // Flatten the asset's own colors into the blueprint palette.
     filter: ART_FILTER.blueprint,
     opacity: 0.9,
   };

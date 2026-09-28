@@ -90,9 +90,10 @@ export default function BreakSection() {
               maxWidth: 460,
             }}
           >
-            Most rework in CAD is not a modelling problem. It is a decision that was
-            never made: which face is the datum, what the fit needs to be, which
-            dimension the rest of the part should follow.
+            Most of the time you spend redoing a part is not a modeling problem. It is
+            a decision nobody made: which face everything gets measured from, how
+            tightly the pieces are meant to fit, which one measurement the rest of the
+            part should follow.
           </p>
 
           <p

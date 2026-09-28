@@ -4,6 +4,7 @@ import { Check, CheckSquare, Lock, Square, X } from 'lucide-react';
 import CrosshairCard from '../components/primitives/CrosshairCard';
 import ReviewPanel from '../components/ReviewPanel';
 import ReferenceReveal from '../components/ReferenceReveal';
+import AskBox from '../components/AskBox';
 import { useAuth } from '../auth/AuthContext';
 import DimensionDivider from '../components/primitives/DimensionDivider';
 import Redline from '../components/primitives/Redline';
@@ -322,11 +323,11 @@ export default function StagePanel({ stage, open, onClose, onAnimState }: Props)
 
                   {cp.review && <ReviewPanel checkpoint={cp} />}
 
-                  {/*
-                    Available once the work is in: ticked off, or submitted for
-                    review. Before that it would just be an answer sheet.
-                  */}
-                  <ReferenceReveal checkpoint={cp} available={done} />
+                  {/* On every checkpoint, not just the reviewed ones. */}
+                  <AskBox checkpoint={cp} />
+
+                  {/* Open from the start, still behind a click. */}
+                  <ReferenceReveal checkpoint={cp} />
 
                   <button
                     type="button"
